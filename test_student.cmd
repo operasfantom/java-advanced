@@ -1,0 +1,1 @@
+java -cp "out\production\student" -p "java-advanced-2019\lib;java-advanced-2019\artifacts" -m info.kgeorgiy.java.advanced.student StudentGroupQuery ru.ifmo.rain.yatcheniy.student.StudentDB
