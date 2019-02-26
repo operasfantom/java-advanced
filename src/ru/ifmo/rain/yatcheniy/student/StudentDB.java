@@ -22,11 +22,6 @@ public class StudentDB implements StudentGroupQuery {
         return String.format("%s %s", s.getFirstName(), s.getLastName());
     }
 
-    private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
-        Map<Object, Boolean> map = new HashMap<>();
-        return t -> map.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
-    }
-
     private Stream<Student> getSortedStudents(Collection<Student> students) {
         return students.stream()
                 .sorted(STUDENT_COMPARATOR);
@@ -43,7 +38,7 @@ public class StudentDB implements StudentGroupQuery {
                 .filter(getPredicateByMember(Student::getGroup, group));
     }
 
-    private <T, R> Predicate<T> getPredicateByMember(Function<? super T, R> keyExtractor, R key) {
+    private <T, R> Predicate<T> getPredicateByMember(Function<? super T, ? extends R> keyExtractor, R key) {
         return student -> Objects.equals(key, keyExtractor.apply(student));
     }
 
@@ -67,6 +62,12 @@ public class StudentDB implements StudentGroupQuery {
                 .collect(Collectors.toList());
     }
 
+    private <T> long getDistinctCount(Stream<T> stream) {
+        return stream
+                .distinct()
+                .count();
+    }
+
     @Override
     public List<Group> getGroupsById(Collection<Student> students) {
         return getGroupsByName0(students)
@@ -86,16 +87,11 @@ public class StudentDB implements StudentGroupQuery {
     @Override
     public String getLargestGroupFirstName(Collection<Student> students) {
         return getGroups(students)
-                .max(Comparator.comparingLong((Group group) -> group.getStudents().stream().filter(distinctByKey(Student::getFirstName)).count())
+                .max(Comparator.comparingLong((Group group) ->
+                        getDistinctCount(group.getStudents().stream().map(Student::getFirstName)))
                         .thenComparing(GROUP_DESCENDING_NAME_COMPARATOR))
                 .map(Group::getName)
                 .orElse("");
-    }
-
-    private Comparator<Group> getAllDistinctComparator(Function<Student, Object> keyExtractor) {
-        return Comparator.comparingLong((Group g) -> g.getStudents().stream()
-                .filter(distinctByKey(keyExtractor))
-                .count());
     }
 
     @Override
