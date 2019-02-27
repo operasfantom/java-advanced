@@ -27,13 +27,21 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     @SuppressWarnings("unchecked")
+    private int comparableCompare(E a, E b) {
+        if (comparator == null) {
+            return ((Comparable<E>) a).compareTo(b);
+        } else {
+            return comparator.compare(a, b);
+        }
+    }
+
     private List<E> getListIfSorted(Collection<? extends E> collection, Comparator<? super E> comparator) {
-        if (collection.contains(null)) {
+        if (collection.parallelStream().anyMatch(Objects::isNull)) {
             return null;
         }
 
         if (comparator == null) {
-            if (!collection.stream().allMatch(Comparable.class::isInstance)) {
+            if (!collection.parallelStream().allMatch(Comparable.class::isInstance)) {
                 return null;
             }
         }
@@ -48,12 +56,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         result.add(prev);
         while (iterator.hasNext()) {
             E next = iterator.next();
-            int compare;
-            if (comparator != null) {
-                compare = Objects.compare(prev, next, comparator);
-            } else {
-                compare = ((Comparable<E>) prev).compareTo(next);
-            }
+            int compare = comparableCompare(prev, next);
             switch (compare) {
                 case +1:
                     return null;
@@ -65,7 +68,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
             }
             prev = next;
         }
-        return result;
+        return Collections.unmodifiableList(result);
     }
 
     private List<E> sortedList(Collection<? extends E> collection) {
@@ -79,16 +82,16 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         }
     }
 
-    private int binarySearch(E e) {
+    private int binarySearch(final E e) {
         return Collections.binarySearch(data, e, comparator);
     }
 
-    private int findLowerOrEquals(E e, boolean inclusive) {
+    private int findLowerOrEquals(final E e, boolean inclusive) {
         int i = binarySearch(e);
         return (i < 0 ? -i - 2 : (inclusive ? i : i - 1));
     }
 
-    private int findGreaterOrEquals(E e, boolean inclusive) {
+    private int findGreaterOrEquals(final E e, boolean inclusive) {
         int i = binarySearch(e);
         return (i < 0 ? -i - 1 : (inclusive ? i : i + 1));
     }
@@ -155,7 +158,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return c.stream().allMatch(this::contains);
+        return c.parallelStream().allMatch(this::contains);
     }
 
     @Override
@@ -190,6 +193,9 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
 
     @Override
     public NavigableSet<E> subSet(E fromElement, boolean fromInclusive, E toElement, boolean toInclusive) {
+        if (Objects.compare(fromElement, toElement, comparator) == +1) {
+            throw new IllegalArgumentException("fromElement > toElement");
+        }
         Objects.requireNonNull(fromElement);
         Objects.requireNonNull(toElement);
         int l = findGreaterOrEquals(fromElement, fromInclusive);

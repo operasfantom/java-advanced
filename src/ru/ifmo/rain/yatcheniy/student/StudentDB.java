@@ -1,5 +1,6 @@
 package ru.ifmo.rain.yatcheniy.student;
 
+import info.kgeorgiy.java.advanced.student.AdvancedStudentGroupQuery;
 import info.kgeorgiy.java.advanced.student.Group;
 import info.kgeorgiy.java.advanced.student.Student;
 import info.kgeorgiy.java.advanced.student.StudentGroupQuery;
@@ -11,7 +12,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class StudentDB implements StudentGroupQuery {
+public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
     private static final Comparator<Student> STUDENT_COMPARATOR =
             Comparator.comparing(Student::getLastName)
                     .thenComparing(Student::getFirstName)
@@ -168,5 +169,17 @@ public class StudentDB implements StudentGroupQuery {
                         Student::getFirstName,
                         BinaryOperator.minBy(Comparator.naturalOrder())
                 ));
+    }
+
+    @Override
+    public String getMostPopularName(Collection<Student> students) {
+        return students.stream()
+                .max(Comparator.comparing((Student student) ->
+                        getDistinctCount(students.stream()
+                                .filter(getPredicateByMember(StudentDB::getFullName, getFullName(student)))
+                                .map(Student::getGroup))
+                ).thenComparing(StudentDB::getFullName))
+                .map(StudentDB::getFullName)
+                .orElse("");
     }
 }
