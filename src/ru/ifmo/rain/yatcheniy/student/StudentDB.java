@@ -16,8 +16,9 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
     private static final Comparator<Student> STUDENT_COMPARATOR =
             Comparator.comparing(Student::getLastName)
                     .thenComparing(Student::getFirstName)
-                    .thenComparing(Student::compareTo);
-    private static final Comparator<Group> GROUP_DESCENDING_NAME_COMPARATOR = Comparator.comparing(Group::getName).reversed();
+                    .thenComparing(Student::getId);
+    private static final Comparator<Group> GROUP_ASCENDING_NAME_COMPARATOR = Comparator.comparing(Group::getName);
+    private static final Comparator<Group> GROUP_DESCENDING_NAME_COMPARATOR = GROUP_ASCENDING_NAME_COMPARATOR.reversed();
 
     private static String getFullName(Student s) {
         return String.format("%s %s", s.getFirstName(), s.getLastName());
@@ -30,7 +31,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
 
     private Stream<Group> getGroupsByName0(Collection<Student> students) {
         return getGroups(students)
-                .sorted(Comparator.comparing(Group::getName))
+                .sorted(GROUP_ASCENDING_NAME_COMPARATOR)
                 .map(group -> new Group(group.getName(), sortStudentsByName(group.getStudents())));
     }
 
@@ -79,7 +80,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
     @Override
     public String getLargestGroup(Collection<Student> students) {
         return getGroups(students)
-                .max(Comparator.comparing((Group g) -> g.getStudents().size())
+                .max(Comparator.comparingInt((Group g) -> g.getStudents().size())
                         .thenComparing(GROUP_DESCENDING_NAME_COMPARATOR))
                 .map(Group::getName)
                 .orElse("");
@@ -131,7 +132,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
     @Override
     public List<Student> sortStudentsById(Collection<Student> students) {
         return students.stream()
-                .sorted(Comparator.comparing(Student::getId))
+                .sorted(Comparator.comparingInt(Student::getId))
                 .collect(Collectors.toList());
     }
 
@@ -174,7 +175,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
     @Override
     public String getMostPopularName(Collection<Student> students) {
         return students.stream()
-                .max(Comparator.comparing((Student student) ->
+                .max(Comparator.comparingLong((Student student) ->
                         getDistinctCount(students.stream()
                                 .filter(getPredicateByMember(StudentDB::getFullName, getFullName(student)))
                                 .map(Student::getGroup))

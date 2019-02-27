@@ -27,7 +27,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     @SuppressWarnings("unchecked")
-    private int comparableCompare(E a, E b) {
+    private int compareComparable(E a, E b) {
         if (comparator == null) {
             return ((Comparable<E>) a).compareTo(b);
         } else {
@@ -36,12 +36,12 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     private List<E> getListIfSorted(Collection<? extends E> collection, Comparator<? super E> comparator) {
-        if (collection.parallelStream().anyMatch(Objects::isNull)) {
+        if (collection.stream().anyMatch(Objects::isNull)) {
             return null;
         }
 
         if (comparator == null) {
-            if (!collection.parallelStream().allMatch(Comparable.class::isInstance)) {
+            if (!collection.stream().allMatch(Comparable.class::isInstance)) {
                 return null;
             }
         }
@@ -56,7 +56,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         result.add(prev);
         while (iterator.hasNext()) {
             E next = iterator.next();
-            int compare = comparableCompare(prev, next);
+            int compare = compareComparable(prev, next);
             switch (compare) {
                 case +1:
                     return null;
@@ -158,7 +158,7 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return c.parallelStream().allMatch(this::contains);
+        return c.stream().allMatch(this::contains);
     }
 
     @Override
