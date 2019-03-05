@@ -2,6 +2,7 @@ package ru.ifmo.rain.yatcheniy.arrayset;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     private final Comparator<? super E> comparator;
     private final List<E> data;
@@ -36,27 +37,20 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
     }
 
     private List<E> getListIfSorted(Collection<? extends E> collection, Comparator<? super E> comparator) {
-        if (collection.stream().anyMatch(Objects::isNull)) {
-            return null;
-        }
-
         if (comparator == null) {
+            if (collection.stream().anyMatch(Objects::isNull)) {
+                return null;
+            }
+
             if (!collection.stream().allMatch(Comparable.class::isInstance)) {
                 return null;
             }
         }
 
-        var iterator = collection.iterator();
-
-        if (!iterator.hasNext()) {
-            return Collections.emptyList();
-        }
         List<E> result = new ArrayList<>();
-        E prev = iterator.next();
-        result.add(prev);
-        while (iterator.hasNext()) {
-            E next = iterator.next();
-            int compare = compareComparable(prev, next);
+        E prev = null;
+        for (E next : collection) {
+            int compare = prev == null ? -1 : compareComparable(prev, next);
             switch (compare) {
                 case +1:
                     return null;
@@ -196,8 +190,6 @@ public class ArraySet<E> extends AbstractSet<E> implements NavigableSet<E> {
         if (Objects.compare(fromElement, toElement, comparator) == +1) {
             throw new IllegalArgumentException("fromElement > toElement");
         }
-        Objects.requireNonNull(fromElement);
-        Objects.requireNonNull(toElement);
         int l = findGreaterOrEquals(fromElement, fromInclusive);
         int r = findLowerOrEquals(toElement, toInclusive) + 1;
         if (r + 1 == l) {
