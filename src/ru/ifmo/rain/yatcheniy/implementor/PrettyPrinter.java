@@ -23,7 +23,7 @@ public class PrettyPrinter {
     public void print(String s) {
         for (var c : s.toCharArray()) {
             if (needIndent) {
-                builder.append(" ".repeat(Math.max(0, indentsCount)));
+                builder.append(" ".repeat(indentsCount));
                 needIndent = false;
             }
             builder.append(c);
