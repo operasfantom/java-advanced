@@ -12,11 +12,10 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +23,7 @@ import java.util.stream.Stream;
 public class Implementor implements Impler {
     private final String IMPL_SUFFIX = "Impl";
     private final String JAVA_EXT = ".java";
-    private ImplerException thrownException;
+    private ImplerException thrownException = null;
 
     private void implementConstructors(Class<?> token, PrettyPrinter printer) throws ImplerException {
         getOverriddenConstructors(token)
@@ -118,15 +117,16 @@ public class Implementor implements Impler {
 
         try (Writer out = Files.newBufferedWriter(resolvePath(token, root))) {
             out.write(printer.toString());
-            try (Writer writer = Files.newBufferedWriter(Paths.get("C:/temp/output.log"), StandardOpenOption.APPEND)) {
+            /*try (Writer writer = Files.newBufferedWriter(Paths.get("C:/temp/output.log"), StandardOpenOption.APPEND)) {
                 writer.write(printer.toString());
-            }
+            }*/
+            System.err.println(printer.toString());
         } catch (IOException e) {
-            throw new ImplerException("Error while writing:" + e.getMessage());
+            throw new ImplerException("Error while writing: " + e.getMessage());
         }
     }
 
-    private void file(PrettyPrinter printer, Class<?> token) throws ImplerException {
+    private void file(PrettyPrinter printer, Class<?> token) {
         printer.println(getPackage(token));
         printer.println();
         printer.block(String.format("%s {", getClassDeclaration(token)), "};",
@@ -153,11 +153,24 @@ public class Implementor implements Impler {
         return getCheckedException(method.getExceptionTypes());
     }
 
-    private Stream<Method> getOverrideMethods(Class<?> token) {
-        return Arrays.stream(token.getMethods())
+    private List<Method> getOverrideMethods(Class<?> token) {
+        return Stream.<Class<?>>iterate(token, Objects::nonNull, Class::getSuperclass)
+                .map(aClass -> new ArrayList<Method>() {{
+                    addAll(Arrays.asList(aClass.getDeclaredMethods()));
+                    addAll(Arrays.asList(aClass.getMethods()));
+                }})
+                .flatMap(ArrayList::stream)
+                .map(UniqueMethod::new)
+//                .peek(uniqueMethod -> System.err.println(uniqueMethod.method))
+//                .peek(uniqueMethod -> System.err.println('.'))
+                .distinct()
+//                .peek(uniqueMethod -> System.err.println(uniqueMethod.method))
+                .map(UniqueMethod::getMethod)
+                .filter(method -> Modifier.isAbstract(method.getModifiers() & Modifier.methodModifiers()))
                 .filter(Predicate.not(Method::isDefault))
-                .filter(method -> (method.getModifiers() & (Modifier.NATIVE | Modifier.VOLATILE)) == 0)
-                .filter(method -> !Modifier.isFinal(method.getModifiers()));
+                .filter(method -> (method.getModifiers() & (Modifier.NATIVE | Modifier.VOLATILE | Modifier.PRIVATE | Modifier.FINAL)) == 0)
+                .filter(method -> !Modifier.isFinal(method.getModifiers()))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private String getMethodBody(Method method) {
@@ -171,6 +184,8 @@ public class Implementor implements Impler {
             return "true";
         } else if (returnType.isPrimitive()) {
             return "0";
+        } else if (returnType.equals(String.class)) {
+            return "\"\"";
         } else {
             return "null";
         }
