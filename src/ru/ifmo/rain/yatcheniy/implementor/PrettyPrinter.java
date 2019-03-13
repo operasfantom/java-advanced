@@ -16,10 +16,6 @@ public class PrettyPrinter {
         this.step = step;
     }
 
-    public void file(Class<?> token) {
-
-    }
-
     public void print(String s) {
         for (var c : s.toCharArray()) {
             if (needIndent) {
