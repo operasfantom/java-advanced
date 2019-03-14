@@ -28,14 +28,24 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
+/**
+ * The implementation of JarImpler class.
+ *
+ * @author Pavel Yatcheniy
+ */
 public class Implementor implements JarImpler {
+    private static String USAGE_MESSAGE = "Usage: [-jar] <className> [*.jar]";
     private final String IMPL_SUFFIX = "Impl";
     private final String JAVA_EXT = ".java";
     private final String JAR_EXT = ".jar";
     private final String CLASS_EXT = ".class";
     private ImplerException thrownException = null;
-    private static String USAGE_MESSAGE = "Usage: [-jar] <className> [*.jar]";
 
+    /**
+     * The entry point of application.
+     *
+     * @param args the input arguments
+     */
     public static void main(String[] args) {
         if (args == null) {
             logError(USAGE_MESSAGE);
@@ -65,11 +75,25 @@ public class Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Log <tt>message</tt> in system error output stream
+     *
+     * @param message {@link String} represents error
+     */
     //region common
     private static void logError(String message) {
         System.err.println(message);
     }
 
+    /**
+     * Get <tt>token</tt>'s package name regarding the <tt>root</tt>'s path
+     *
+     * @param token     {@link Class}
+     * @param root      {@link Path} from where resolves result path
+     * @param extension is extension of result path
+     * @return {@link Path} of combination <tt>root</tt>'s path, splitted <tt>token</tt>'s package name and <tt>extension</tt>
+     * @throws IOException if couldn't create directories to <tt>token</tt>'s package
+     */
     private Path resolvePath(Class<?> token, Path root, String extension) throws IOException {
         Path directoryPath = root.resolve(token.getPackageName().replace(".", File.separator));
         Files.createDirectories(directoryPath);
@@ -78,6 +102,15 @@ public class Implementor implements JarImpler {
     //endregion
 
     //region Java
+
+    /**
+     * Implement <tt>token</tt> to file with prefix of <tt>token</tt>'s name and suffix equals to {@link Implementor#IMPL_SUFFIX}
+     *
+     *
+     * @param token {@link Class} to be implemented
+     * @param root  {@link Path} where to store implemented class
+     * @throws ImplerException if couldn't implement given <tt>token</tt>
+     */
     @Override
     public void implement(Class<?> token, Path root) throws ImplerException {
         if (token == null || root == null) {
@@ -103,7 +136,7 @@ public class Implementor implements JarImpler {
             throw thrownException;
         }
 
-        try (Writer out = Files.newBufferedWriter(resolveJavaPath(token, root))) {
+        try (Writer out = Files.newBufferedWriter(resolvePath(token, root, JAVA_EXT))) {
             out.write(printer.toString());
             /*try (Writer writer = Files.newBufferedWriter(Paths.get("C:/temp/output.log"), StandardOpenOption.APPEND)) {
                 writer.write(printer.toString());
@@ -114,6 +147,12 @@ public class Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Implement constructor for <tt>token</tt> and print it to <tt>printer</tt>
+     *
+     * @param token   {@link Class} whose constructors are implementing
+     * @param printer {@link PrettyPrinter} where to print formatted constructors
+     */
     private void implementConstructors(Class<?> token, PrettyPrinter printer) {
         getOverriddenConstructors(token)
                 .forEach(constructor -> printer.block(String.format("%s {", getConstructorHeader(constructor)), "}",
@@ -122,6 +161,10 @@ public class Implementor implements JarImpler {
                 );
     }
 
+    /**
+     * @param constructor {@link Constructor}
+     * @return formatted header of according class
+     */
     private String getConstructorHeader(Constructor<?> constructor) {
         return String.format("%s %s(%s)%s",
                 Modifier.toString(getConstructorModifiers(constructor)),
@@ -131,10 +174,21 @@ public class Implementor implements JarImpler {
         );
     }
 
+    /**
+     * @param constructor {@link Class}'s constructor to provide exceptions
+     * @return <tt>constructor</tt>'s exception types
+     * @implSpec This implementation calls {@code getCheckedException(constructor.getExceptionTypes())}.
+     */
     private String getCheckedException(Constructor<?> constructor) {
         return getCheckedException(constructor.getExceptionTypes());
     }
 
+    /**
+     * Format <tt>exceptionTypes</tt> joining by delimiter {@code ", throws"}
+     *
+     * @param exceptionTypes {@link Class[]} to be formatted
+     * @return formatted <tt>exceptionTypes</tt>
+     */
     private String getCheckedException(Class<?>[] exceptionTypes) {
         if (exceptionTypes.length > 0) {
             return Arrays.stream(exceptionTypes)
@@ -145,10 +199,20 @@ public class Implementor implements JarImpler {
         }
     }
 
+    /**
+     * @param constructor {@link Class}'s constructor to provide modifiers
+     * @return all <tt>constructor</tt>'s modifiers
+     */
     private int getConstructorModifiers(Constructor<?> constructor) {
         return constructor.getModifiers() & (Modifier.constructorModifiers());
     }
 
+    /**
+     * Get <tt>token</tt>'s constructors to be overriden
+     *
+     * @param token {@link Class} from which loaded declared constructors
+     * @return {@link List} of constructor to be overridden
+     */
     private List<Constructor<?>> getOverriddenConstructors(Class<?> token) {
         List<Constructor<?>> constructors = Arrays.stream(token.getDeclaredConstructors())
                 .filter(constructor -> !Modifier.isPrivate(getConstructorModifiers(constructor)))
@@ -159,10 +223,24 @@ public class Implementor implements JarImpler {
         return constructors;
     }
 
+    /**
+     * Get parameters of provided <tt>constructor</tt>
+     *
+     * @param constructor {@link Constructor} to get parameters from
+     * @param isUsage     {@link #getParameters(Parameter[], boolean)}
+     * @return {@link String} presentation of parameters
+     */
     private String getParameters(Constructor<?> constructor, boolean isUsage) {
         return getParameters(constructor.getParameters(), isUsage);
     }
 
+    /**
+     * Get formatted parameters.
+     *
+     * @param parameters {@link Parameter[]} to get from
+     * @param isUsage    {@code boolean} to identify whether to write parameters' name or not
+     * @return {@link String} presentation of parameters
+     */
     private String getParameters(Parameter[] parameters, boolean isUsage) {
         return Arrays.stream(parameters)
                 .map(parameter ->
@@ -175,10 +253,22 @@ public class Implementor implements JarImpler {
 
     }
 
+    /**
+     * Get implementation's file name of <tt>token</tt>
+     *
+     * @param token {@link Class} to get implementation's name from
+     * @return implementation's file name
+     */
     private String getImplementationName(Class<?> token) {
         return token.getSimpleName() + IMPL_SUFFIX;
     }
 
+    /**
+     * Print <tt>token</tt>'s implementation into <tt>printer</tt>
+     *
+     * @param printer where to print
+     * @param token   {@link Class} which is implemented
+     */
     private void file(PrettyPrinter printer, Class<?> token) {
         printer.println(getPackage(token));
         printer.println();
@@ -190,18 +280,36 @@ public class Implementor implements JarImpler {
         );
     }
 
-    private void implementMethods(Class<?> token, PrettyPrinter printer1) {
+    /**
+     * Implement methods into <tt>printer</tt>
+     *
+     * @param token   {@link Class} where to get methods from
+     * @param printer where to write implementation
+     */
+    private void implementMethods(Class<?> token, PrettyPrinter printer) {
         getOverrideMethods(token)
-                .forEach(method -> printer1.block(String.format("%s%s {", getMethodHead(method), getCheckedException(method)), "}",
+                .forEach(method -> printer.block(String.format("%s%s {", getMethodHead(method), getCheckedException(method)), "}",
                         printer2 -> printer2.println(getMethodBody(method))
                         )
                 );
     }
 
+    /**
+     * Get checked exceptions of <tt>method</tt>
+     *
+     * @param method {@link Method} where to get Exception types
+     * @return {@link String} presentation of checked exceptions
+     */
     private String getCheckedException(Method method) {
         return getCheckedException(method.getExceptionTypes());
     }
 
+    /**
+     * Get unique <tt>token</tt>'s {@link Method}s to be overriden
+     *
+     * @param token {@link Class} to get methods from
+     * @return {@link List} of methods
+     */
     private List<Method> getOverrideMethods(Class<?> token) {
         return Stream.<Class<?>>iterate(token, Objects::nonNull, Class::getSuperclass)
                 .map(aClass -> new ArrayList<Method>() {{
@@ -218,14 +326,32 @@ public class Implementor implements JarImpler {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
+    /**
+     * Get method modifiers
+     *
+     * @param method {@link Method} from which modifiers got
+     * @return mask of method modifiers
+     */
     private int getMethodModifiers(Method method) {
         return method.getModifiers();
     }
 
+    /**
+     * Get method body
+     *
+     * @param method {@link Method} from which method got
+     * @return {@link String} presentation of method body
+     */
     private String getMethodBody(Method method) {
         return String.format("return %s;", getDefaultValue(method.getReturnType()));
     }
 
+    /**
+     * Get default value for {@link Class}
+     *
+     * @param returnType {@link Class} for which get default value
+     * @return default value
+     */
     private String getDefaultValue(Class<?> returnType) {
         if (returnType.equals(void.class)) {
             return "";
@@ -240,6 +366,12 @@ public class Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Get method's head of <tt>method</tt>
+     *
+     * @param method {@link Method} from which method's head got
+     * @return {@link String} presentation of method's head
+     */
     private String getMethodHead(Method method) {
         return String.format("%s %s %s(%s)",
                 Modifier.toString(getOverriddenModifiers(method)),
@@ -249,29 +381,59 @@ public class Implementor implements JarImpler {
         );
     }
 
+    /**
+     * Get overridden modifiers of <tt>method</tt>
+     *
+     * @param method {@link Method} from which modifiers got
+     * @return mask of overridden modifiers
+     */
     private int getOverriddenModifiers(Method method) {
         return getMethodModifiers(method) & ~(Modifier.ABSTRACT | Modifier.TRANSIENT);
     }
 
+    /**
+     * Get parameters of provided <tt>constructor</tt>
+     *
+     * @param method  {@link Method} to get parameters from
+     * @param isUsage {@link #getParameters(Parameter[], boolean)}
+     * @return {@link String} presentation of parameters
+     */
     private String getParameters(Method method, boolean isUsage) {
         return getParameters(method.getParameters(), isUsage);
     }
 
+    /**
+     * Get class' declaration of <tt>token</tt>
+     *
+     * @param token {@link Class} to get declaration from
+     * @return {@link String} presentation of class' declaration
+     */
     private String getClassDeclaration(Class<?> token) {
         String keyword = token.isInterface() ? "implements" : "extends";
         return String.format("class %s %s %s", getImplementationName(token), keyword, token.getCanonicalName());
     }
 
+    /**
+     * Get formatted java package name.
+     *
+     * @param token {@link Class} to get from
+     * @return java package name
+     */
     private String getPackage(Class<?> token) {
         return String.format("package %s;", token.getPackageName());
     }
 
-    private Path resolveJavaPath(Class<?> token, Path root) throws IOException {
-        return resolvePath(token, root, JAVA_EXT);
-    }
     //endregion
 
     //region Jar
+
+    /**
+     * Implement <tt>token</tt>. Compile it to .jar by path <tt>jarFile</tt> if it's possible.
+     *
+     * @param token   {@link Class} which is implementing and compiling to .jar
+     * @param jarFile {@link Path} where to store .jar file
+     * @throws ImplerException if error occurred while writting jar
+     */
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         try {
@@ -282,11 +444,19 @@ public class Implementor implements JarImpler {
             Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
             compileFile(buildDirectory, javaFilePath);
             writeJar(token, jarFile, classFilePath);
+            return;
         } catch (IOException e) {
             throw new ImplerException("Error occurred while witting jar: " + e.getMessage());
         }
     }
 
+    /**
+     * Compile <tt>file</tt> to <tt>buildDirectory</tt>
+     *
+     * @param buildDirectory {@link Path} where to store compiled .class files
+     * @param file           {@link Path} .java file which is compiled
+     * @throws ImplerException if couldn't compile file
+     */
     private void compileFile(Path buildDirectory, Path file) throws ImplerException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
@@ -304,16 +474,24 @@ public class Implementor implements JarImpler {
         }
     }
 
+    /**
+     * Write compiled class <tt>token</tt> from <tt>classFilePath</tt> to <tt>jarFile</tt>
+     *
+     * @param token         {@link Class} whose class are compiled
+     * @param jarFile       {@link Path} to .jar file where create it
+     * @param classFilePath {@link Path} to temporary folder with .class files
+     * @throws IOException if an I/O occurs while writting .jar file
+     */
     private void writeJar(Class<?> token, Path jarFile, Path classFilePath) throws IOException {
         Manifest manifest = new Manifest();
         Attributes mainAttributes = manifest.getMainAttributes();
         mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         mainAttributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, "Pavel Yatcheniy");
-        mainAttributes.put(Attributes.Name.MAIN_CLASS, token.getCanonicalName());
+//        mainAttributes.put(Attributes.Name.MAIN_CLASS, token.getCanonicalName());
         try (JarOutputStream stream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
-            stream.putNextEntry(new ZipEntry(resolvePath(token, Paths.get("."), CLASS_EXT).toString()));
-            stream.closeEntry();
+            stream.putNextEntry(new ZipEntry(resolvePath(token, Paths.get(""), CLASS_EXT).toString()));
             Files.copy(classFilePath, stream);
+            stream.closeEntry();
         }
     }
     //endregion
