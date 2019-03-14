@@ -1,5 +1,5 @@
 open module ru.ifmo.rain.yatcheniy.implementor {
-    requires transitive info.kgeorgiy.java.advanced.implementor;
+    requires info.kgeorgiy.java.advanced.implementor;
 
     requires java.compiler;
 

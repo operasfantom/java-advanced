@@ -121,6 +121,10 @@ public class Implementor implements JarImpler {
             throw new ImplerException("Token can't be primitive type");
         }
 
+        if (token.isArray()) {
+            throw new ImplerException("Token can't be array");
+        }
+
         if (token == Enum.class) {
             throw new ImplerException("Token can't be java.lang.Enum");
         }
@@ -353,7 +357,7 @@ public class Implementor implements JarImpler {
      * @return default value
      */
     private String getDefaultValue(Class<?> returnType) {
-        if (returnType.equals(void.class)) {
+        if (returnType.equals(Void.TYPE)) {
             return "";
         } else if (returnType.equals(Boolean.TYPE)) {
             return "true";
@@ -438,7 +442,8 @@ public class Implementor implements JarImpler {
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         try {
             Path implementationsDirectory = Files.createTempDirectory(".");
-            Path buildDirectory = Files.createTempDirectory(".");
+//            Path buildDirectory = Files.createTempDirectory(".");
+            Path buildDirectory = implementationsDirectory;
             implement(token, implementationsDirectory);
             Path javaFilePath = resolvePath(token, implementationsDirectory, JAVA_EXT);
             Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
