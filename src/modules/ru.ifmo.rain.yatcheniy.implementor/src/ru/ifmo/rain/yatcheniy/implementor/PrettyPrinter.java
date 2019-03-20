@@ -34,6 +34,8 @@ public class PrettyPrinter {
      * @param s {@link String} to print into
      */
     public void print(String s) {
+        s = toUnicode(s);
+
         for (var c : s.toCharArray()) {
             if (needIndent) {
                 builder.append(" ".repeat(indentsCount));
@@ -98,5 +100,23 @@ public class PrettyPrinter {
         } finally {
             indentsCount -= step;
         }
+    }
+
+    /**
+     * Converts an international String to unicode numbers
+     *
+     * @param s {@link String} to convert from
+     * @return converted string
+     */
+    private String toUnicode(String s) {
+        StringBuilder b = new StringBuilder();
+        for (char c : s.toCharArray()) {
+            if (c >= 128) {
+                b.append(String.format("\\u%04X", (int) c));
+            } else {
+                b.append(c);
+            }
+        }
+        return b.toString();
     }
 }

@@ -5,13 +5,13 @@ import info.kgeorgiy.java.advanced.implementor.JarImpler;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
-import java.io.File;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -151,7 +151,7 @@ public class Implementor implements JarImpler {
             throw thrownException;
         }
 
-        try (Writer out = Files.newBufferedWriter(resolvePath(token, root, JAVA_EXT))) {
+        try (Writer out = Files.newBufferedWriter(resolvePath(token, root, JAVA_EXT), StandardCharsets.UTF_8)) {
             out.write(printer.toString());
             /*try (Writer writer = Files.newBufferedWriter(Paths.get("C:/temp/output.log"), StandardOpenOption.APPEND)) {
                 writer.write(printer.toString());
@@ -452,13 +452,14 @@ public class Implementor implements JarImpler {
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         try {
-            Path implementationsDirectory = Files.createTempDirectory(".");
+//            Path implementationsDirectory = Files.createTempDirectory(".");
+            Path implementationsDirectory = Files.createTempDirectory(jarFile.toAbsolutePath().getParent(), "temp");
 //            Path buildDirectory = Files.createTempDirectory(".");
             Path buildDirectory = implementationsDirectory;
             implement(token, implementationsDirectory);
             Path javaFilePath = resolvePath(token, implementationsDirectory, JAVA_EXT);
             Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
-            compileFile(buildDirectory, javaFilePath);
+            compileFile(buildDirectory, javaFilePath, classFilePath);
             writeJar(token, jarFile, classFilePath);
             return;
         } catch (IOException e) {
@@ -471,9 +472,10 @@ public class Implementor implements JarImpler {
      *
      * @param buildDirectory {@link Path} where to store compiled .class files
      * @param file           {@link Path} .java file which is compiled
+     * @param classFilePath
      * @throws ImplerException if couldn't compile file
      */
-    private void compileFile(Path buildDirectory, Path file) throws ImplerException {
+    private void compileFile(Path buildDirectory, Path file, Path classFilePath) throws ImplerException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
             throw new ImplerException("Could not find java compiler");
@@ -505,10 +507,20 @@ public class Implementor implements JarImpler {
         mainAttributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, "Pavel Yatcheniy");
 //        mainAttributes.put(Attributes.Name.MAIN_CLASS, token.getCanonicalName());
         try (JarOutputStream stream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
-            stream.putNextEntry(new ZipEntry(resolvePath(token, Paths.get(""), CLASS_EXT).toString()));
+            stream.putNextEntry(new ZipEntry(resolveJarPath(token)));
             Files.copy(classFilePath, stream);
             stream.closeEntry();
         }
+    }
+
+    /**
+     * Resolve relative path inside jar archive
+     *
+     * @param token {@link Class} for whome path resolves
+     * @return relative path inside jar archive
+     */
+    private String resolveJarPath(Class<?> token) {
+        return token.getName().replace('.', '/') + IMPL_SUFFIX + CLASS_EXT;
     }
     //endregion
 }
