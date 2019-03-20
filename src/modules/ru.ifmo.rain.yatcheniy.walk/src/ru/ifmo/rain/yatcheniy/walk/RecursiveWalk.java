@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.List;
 
 public class RecursiveWalk {
     public static void main(String[] args) {

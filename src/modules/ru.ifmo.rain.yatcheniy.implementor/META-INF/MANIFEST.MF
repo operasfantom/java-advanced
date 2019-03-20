@@ -1,4 +1,2 @@
 Manifest-Version: 1.0
 Main-Class: ru.ifmo.rain.yatcheniy.implementor.Implementor
-Class-Path: /C:/Users/jetbrains/Documents/IFMO/Java/java-advanced/java-advanced-2019/artifacts/info.kgeorgiy.java.advanced.implementor.jar
-
