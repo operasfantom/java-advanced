@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * {@link Method}'s wrapper. It needs to more precise comparing {@link Method}s against default behaviour
+ * {@link Method}'s wrapper. It needs to more precise comparing {@link Method}'s against default behaviour
  */
 class UniqueMethod {
     private final Method method;

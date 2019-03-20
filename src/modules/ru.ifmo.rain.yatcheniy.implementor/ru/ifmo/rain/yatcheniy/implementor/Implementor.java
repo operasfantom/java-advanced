@@ -30,15 +30,27 @@ import java.util.zip.ZipEntry;
 
 /**
  * The implementation of JarImpler class.
- *
- * @author Pavel Yatcheniy
  */
 public class Implementor implements JarImpler {
+    /**
+     * Arguments for usage class
+     */
     private static String USAGE_MESSAGE = "Usage: [-jar] <className> [*.jar]";
+    /**
+     * Suffix of implementation file's name
+     */
     private final String IMPL_SUFFIX = "Impl";
+    /**
+     * Extension of java source file
+     */
     private final String JAVA_EXT = ".java";
-    private final String JAR_EXT = ".jar";
+    /**
+     * Extension of java class file
+     */
     private final String CLASS_EXT = ".class";
+    /**
+     * Unhandled exception to be processed after all
+     */
     private ImplerException thrownException = null;
 
     /**
@@ -76,7 +88,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Log <tt>message</tt> in system error output stream
+     * Log {@code message} in system error output stream
      *
      * @param message {@link String} represents error
      */
@@ -86,13 +98,13 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Get <tt>token</tt>'s package name regarding the <tt>root</tt>'s path
+     * Get {@code token}'s package name regarding the {@code root}'s path
      *
      * @param token     {@link Class}
      * @param root      {@link Path} from where resolves result path
      * @param extension is extension of result path
-     * @return {@link Path} of combination <tt>root</tt>'s path, splitted <tt>token</tt>'s package name and <tt>extension</tt>
-     * @throws IOException if couldn't create directories to <tt>token</tt>'s package
+     * @return {@link Path} of combination {@code root}'s path, splitted {@code token}'s package name and <tt>extension</tt>
+     * @throws IOException if couldn't create directories to {@code token}'s package
      */
     private Path resolvePath(Class<?> token, Path root, String extension) throws IOException {
         Path directoryPath = root.resolve(token.getPackageName().replace(".", File.separator));
@@ -104,12 +116,11 @@ public class Implementor implements JarImpler {
     //region Java
 
     /**
-     * Implement <tt>token</tt> to file with prefix of <tt>token</tt>'s name and suffix equals to {@link Implementor#IMPL_SUFFIX}
-     *
+     * Implement {@code token} to file with prefix of {@code token}'s name and suffix equals to {@link Implementor#IMPL_SUFFIX}
      *
      * @param token {@link Class} to be implemented
      * @param root  {@link Path} where to store implemented class
-     * @throws ImplerException if couldn't implement given <tt>token</tt>
+     * @throws ImplerException if couldn't implement given {@code token}
      */
     @Override
     public void implement(Class<?> token, Path root) throws ImplerException {
@@ -152,7 +163,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Implement constructor for <tt>token</tt> and print it to <tt>printer</tt>
+     * Implement constructor for {@code token} and print it to <tt>printer</tt>
      *
      * @param token   {@link Class} whose constructors are implementing
      * @param printer {@link PrettyPrinter} where to print formatted constructors
@@ -212,7 +223,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Get <tt>token</tt>'s constructors to be overriden
+     * Get {@code token}'s constructors to be overriden
      *
      * @param token {@link Class} from which loaded declared constructors
      * @return {@link List} of constructor to be overridden
@@ -258,7 +269,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Get implementation's file name of <tt>token</tt>
+     * Get implementation's file name of {@code token}
      *
      * @param token {@link Class} to get implementation's name from
      * @return implementation's file name
@@ -268,7 +279,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Print <tt>token</tt>'s implementation into <tt>printer</tt>
+     * Print {@code token}'s implementation into <tt>printer</tt>
      *
      * @param printer where to print
      * @param token   {@link Class} which is implemented
@@ -309,7 +320,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Get unique <tt>token</tt>'s {@link Method}s to be overriden
+     * Get unique {@code token}'s {@link Method}s to be overriden
      *
      * @param token {@link Class} to get methods from
      * @return {@link List} of methods
@@ -407,7 +418,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Get class' declaration of <tt>token</tt>
+     * Get class' declaration of {@code token}
      *
      * @param token {@link Class} to get declaration from
      * @return {@link String} presentation of class' declaration
@@ -432,7 +443,7 @@ public class Implementor implements JarImpler {
     //region Jar
 
     /**
-     * Implement <tt>token</tt>. Compile it to .jar by path <tt>jarFile</tt> if it's possible.
+     * Implement {@code token}. Compile it to .jar by path {@code jarFile} if it's possible.
      *
      * @param token   {@link Class} which is implementing and compiling to .jar
      * @param jarFile {@link Path} where to store .jar file
@@ -456,7 +467,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Compile <tt>file</tt> to <tt>buildDirectory</tt>
+     * Compile {@code file} to {@code buildDirectory}
      *
      * @param buildDirectory {@link Path} where to store compiled .class files
      * @param file           {@link Path} .java file which is compiled
@@ -480,7 +491,7 @@ public class Implementor implements JarImpler {
     }
 
     /**
-     * Write compiled class <tt>token</tt> from <tt>classFilePath</tt> to <tt>jarFile</tt>
+     * Write compiled class {@code token} from {@code classFilePath} to {@code jarFile}
      *
      * @param token         {@link Class} whose class are compiled
      * @param jarFile       {@link Path} to .jar file where create it

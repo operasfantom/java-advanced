@@ -22,7 +22,7 @@ class ReversedViewList<E> extends AbstractList<E> implements RandomAccess {
     @Override
     public Iterator<E> iterator() {
         return new Iterator<>() {
-            ListIterator<E> it = data.listIterator(size());
+            final ListIterator<E> it = data.listIterator(size());
 
             @Override
             public boolean hasNext() {

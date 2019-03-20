@@ -20,6 +20,8 @@ public class PrettyPrinter {
     }
 
     /**
+     * Constructor from number of indents
+     *
      * @param step number of spaces which will be used to indent new block
      */
     public PrettyPrinter(int step) {
@@ -62,10 +64,10 @@ public class PrettyPrinter {
     }
 
     /**
-     * Write block of data with indents providing by <tt>body</tt>. Surround it with <tt>prefix</tt> and <tt>suffix</tt>
+     * Write block of data with indents providing by {@code body}. Surround it with {@code prefix} and {@code suffix}
      *
-     * @param prefix {@link String} to write before accepting <tt>body</tt>
-     * @param suffix {@link String} to write after accepting <tt>body</tt>
+     * @param prefix {@link String} to write before accepting {@code body}
+     * @param suffix {@link String} to write after accepting {@code body}
      * @param body   {@link Consumer} which provides writting action
      */
     public void block(String prefix, String suffix, Consumer<PrettyPrinter> body) {
@@ -85,7 +87,7 @@ public class PrettyPrinter {
     }
 
     /**
-     * Accept <tt>body</tt>. And do action with one more indent
+     * Accept {@code body}. And do action with one more indent
      *
      * @param body {@link Consumer} to accept
      */
