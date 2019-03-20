@@ -15,13 +15,16 @@ import static java.lang.Math.min;
 public class IterativeParallelism implements ListIP {
 
     private <T> List<List<? extends T>> split(List<? extends T> values, int threads) {
-        int groupSize = values.size() / threads;
-        int tailSize = values.size() - groupSize * (threads - 1);
-        List<List<? extends T>> collect = IntStream.range(0, threads - 1)
-                .mapToObj(i -> values.subList(i * groupSize, min((i + 1) * (groupSize), values.size())))
-                .collect(Collectors.toList());
-        collect.add(values.subList(values.size() - tailSize, values.size()));
-        return collect;
+        int smallGroupSize = values.size() / threads;
+        int largeGroupSize = smallGroupSize + 1;
+        int largeGroups = values.size() % threads;
+        int smallGroups = threads - largeGroups;
+        return Stream.concat(
+                IntStream.range(0, largeGroups).mapToObj(i ->
+                        values.subList(i * largeGroupSize, (i + 1) * (largeGroupSize))),
+                IntStream.range(0, smallGroups).mapToObj(i ->
+                        values.subList(largeGroups * largeGroupSize + i * smallGroupSize, largeGroups * largeGroupSize + (i + 1) * smallGroupSize))
+        ).collect(Collectors.toList());
     }
 
     private <R, T> R applyParallel(int threads, List<? extends T> values, Function<Stream<? extends T>, R> mapper, BinaryOperator<R> mergeFunction) throws InterruptedException {
