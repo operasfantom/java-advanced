@@ -1,6 +1,7 @@
-package ru.ifmo.rain.yatcheniy.concurrent;
+package ru.ifmo.rain.yatcheniy.mapper;
 
 import info.kgeorgiy.java.advanced.concurrent.ListIP;
+import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
@@ -13,6 +14,11 @@ import java.util.stream.Stream;
 import static java.lang.Math.min;
 
 public class IterativeParallelism implements ListIP {
+    private ParallelMapper parallelMapper;
+
+    public IterativeParallelism(ParallelMapper parallelMapper) {
+        this.parallelMapper = parallelMapper;
+    }
 
     private <T> List<List<? extends T>> split(List<? extends T> values, int threads) {
         int smallGroupSize = values.size() / threads;
@@ -37,27 +43,36 @@ public class IterativeParallelism implements ListIP {
         threads = min(threads, values.size());
 
         List<List<? extends T>> splittedList = split(values, threads);
-        List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
-        List<Thread> threadList = IntStream.range(0, threads)
-                .mapToObj(i -> new Thread(() -> {
-                            try {
-                                R apply = mapper.apply(splittedList.get(i).stream());
-                                results.set(i, apply);
-                            } catch (Exception e) {
-                                System.err.println("Error: couldn't perform async action");
-                            }
-                        })
-                ).collect(Collectors.toList());
 
-        threadList.forEach(Thread::start);
+        if (parallelMapper == null) {
+            final List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
+            List<Thread> threadList = IntStream.range(0, threads)
+                    .mapToObj(i -> new Thread(() -> {
+                                try {
+                                    R apply = mapper.apply(splittedList.get(i).stream());
+                                    results.set(i, apply);
+                                } catch (Exception e) {
+                                    System.err.println("Error: couldn't perform async action");
+                                }
+                            })
+                    ).collect(Collectors.toList());
+            threadList.forEach(Thread::start);
+            for (Thread thread : threadList) {
+                thread.join();
+            }
 
-        for (Thread thread : threadList) {
-            thread.join();
+            return results.stream()
+                    .reduce(mergeFunction)
+                    .orElseThrow();
+        } else {
+            return parallelMapper.map(mapper, splittedList.stream()
+                    .map(Collection::stream)
+                    .collect(Collectors.toList())
+            )
+                    .stream()
+                    .reduce(mergeFunction)
+                    .orElseThrow();
         }
-
-        return results.stream()
-                .reduce(mergeFunction)
-                .orElseThrow();
     }
 
     @Override

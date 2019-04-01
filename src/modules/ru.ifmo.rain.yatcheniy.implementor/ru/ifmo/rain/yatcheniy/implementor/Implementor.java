@@ -5,12 +5,13 @@ import info.kgeorgiy.java.advanced.implementor.JarImpler;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -166,7 +167,7 @@ public class Implementor implements JarImpler {
      * Implement constructor for {@code token} and print it to <tt>printer</tt>
      *
      * @param token   {@link Class} whose constructors are implementing
-     * @param printer {@link PrettyPrinter} where to print formatted constructors
+     * @param printer where to print formatted constructors
      */
     private void implementConstructors(Class<?> token, PrettyPrinter printer) {
         getOverriddenConstructors(token)
@@ -190,9 +191,10 @@ public class Implementor implements JarImpler {
     }
 
     /**
+     * This implementation calls {@code getCheckedException(constructor.getExceptionTypes())}
+     *
      * @param constructor {@link Class}'s constructor to provide exceptions
      * @return <tt>constructor</tt>'s exception types
-     * @implSpec This implementation calls {@code getCheckedException(constructor.getExceptionTypes())}.
      */
     private String getCheckedException(Constructor<?> constructor) {
         return getCheckedException(constructor.getExceptionTypes());
@@ -459,7 +461,7 @@ public class Implementor implements JarImpler {
             implement(token, implementationsDirectory);
             Path javaFilePath = resolvePath(token, implementationsDirectory, JAVA_EXT);
             Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
-            compileFile(buildDirectory, javaFilePath, classFilePath);
+            compileFile(buildDirectory, javaFilePath);
             writeJar(token, jarFile, classFilePath);
             return;
         } catch (IOException e) {
@@ -472,17 +474,16 @@ public class Implementor implements JarImpler {
      *
      * @param buildDirectory {@link Path} where to store compiled .class files
      * @param file           {@link Path} .java file which is compiled
-     * @param classFilePath
      * @throws ImplerException if couldn't compile file
      */
-    private void compileFile(Path buildDirectory, Path file, Path classFilePath) throws ImplerException {
+    private void compileFile(Path buildDirectory, Path file) throws ImplerException {
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if (compiler == null) {
             throw new ImplerException("Could not find java compiler");
         }
         final List<String> args = new ArrayList<>();
         args.add(file.toString());
-        String classPath = String.format("%s%s%s", buildDirectory, File.pathSeparator, System.getProperty("java.class.path"));
+        String classPath = String.format("%s%s%s%s%s", buildDirectory, File.pathSeparator, System.getProperty("java.class.path"), File.separator, System.getProperty("jdk.module.path"));
         args.addAll(Arrays.asList("-cp", classPath));
         args.addAll(Arrays.asList("-d", buildDirectory.toString()));
         args.addAll(Arrays.asList("-encoding", "UTF-8"));
@@ -498,7 +499,7 @@ public class Implementor implements JarImpler {
      * @param token         {@link Class} whose class are compiled
      * @param jarFile       {@link Path} to .jar file where create it
      * @param classFilePath {@link Path} to temporary folder with .class files
-     * @throws IOException if an I/O occurs while writting .jar file
+     * @throws IOException if an I/O exception occurs while writting .jar file
      */
     private void writeJar(Class<?> token, Path jarFile, Path classFilePath) throws IOException {
         Manifest manifest = new Manifest();

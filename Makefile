@@ -1,12 +1,16 @@
 update_submodule:
 	git submodule update --remote --merge
 
+SURNAME=yatcheniy
+
 LIB_PATH=java-advanced-2019/lib
-ARTIFACTS_PATH=java-advanced-2019/artifacts
-INFO_BASE_MODULE_PATH=${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar
+INFO_ARTIFACTS_PATH=java-advanced-2019/artifacts
+RU_ARTIFACTS_PATH=out/artifacts
+MODULES_PATH=java-advanced-2019/modules
+INFO_BASE_JAR_PATH=${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar
 
 define run_test_with_module
-	java -cp ${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.$(1).jar -p out/artifacts/ru_ifmo_rain_yatcheniy_$(1)_jar/ru.ifmo.rain.yatcheniy.$(1).jar;${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.$(1).jar;${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${LIB_PATH} --add-modules ru.ifmo.rain.yatcheniy.$(1) -m info.kgeorgiy.java.advanced.$(1) $(2) ru.ifmo.rain.yatcheniy.$(1).$(3)
+	java -p ${RU_ARTIFACTS_PATH}/ru_ifmo_rain_yatcheniy_$(1)_jar/ru.ifmo.rain.yatcheniy.$(1).jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.$(1).jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${LIB_PATH} --add-modules ru.ifmo.rain.yatcheniy.$(1) -m info.kgeorgiy.java.advanced.$(1) $(2) ru.ifmo.rain.yatcheniy.$(1).$(3) $(4)
 endef
 #01
 test_walk:
@@ -16,24 +20,41 @@ test_array:
 	$(call run_test_with_module,arrayset,NavigableSet,ArraySet)
 #03
 test_student:
-	$(call run_test_with_module,student,AdvancedStudentGroupQuery,StudentDB)
+	$(call run_test_with_module,student,AdvancedStudentGroupQuery,StudentDB,49)
 #04-06
-RU_IMPLEMENTOR_SOURCE_PATH=src/modules/ru.ifmo.rain.yatcheniy.implementor
-RU_IMPLEMENTOR_PACKAGE_PATH=$(RU_IMPLEMENTOR_SOURCE_PATH)/ru/ifmo/rain/yatcheniy/implementor
-INFO_IMPLEMENTOR_MODULE_PATH=${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.implementor.jar;${LIB_PATH}
-RU_IMPLEMENTOR_JAR_PATH=out/artifacts/ru_ifmo_rain_yatcheniy_implementor_jar/ru.ifmo.rain.yatcheniy.implementor.jar
+RU_IMPLEMENTOR_SOURCE_PATH=src/modules/
+INFO_IMPLEMENTOR_SOURCE_PATH=${MODULES_PATH}/info.kgeorgiy.java.advanced.implementor
+INFO_IMPLEMENTOR_JAR_PATH=${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.implementor.jar;${LIB_PATH}
+RU_IMPLEMENTOR_JAR_PATH=${RU_ARTIFACTS_PATH}/ru_ifmo_rain_yatcheniy_implementor_jar/ru.ifmo.rain.yatcheniy.implementor.jar
 JAVADOC_PATH=out/javadoc
+JAVADOC_LINK=https://docs.oracle.com/en/java/javase/11/docs/api
 
 build_classes:
-	javac -encoding UTF8 -d out/production/ru.ifmo.rain.yatcheniy.implementor -cp ${INFO_IMPLEMENTOR_MODULE_PATH} -p ${INFO_IMPLEMENTOR_MODULE_PATH} src/modules/ru.ifmo.rain.yatcheniy.implementor/src/ru/ifmo/rain/yatcheniy/implementor/*.java
-	javac -encoding UTF8 -d out/production/ru.ifmo.rain.yatcheniy.implementor -p ${INFO_IMPLEMENTOR_MODULE_PATH} src/modules/ru.ifmo.rain.yatcheniy.implementor/module-info.java
-build_jar_module: build_classes
+	javac -encoding UTF8 -d out/production/ru.ifmo.rain.yatcheniy.implementor -cp ${INFO_IMPLEMENTOR_JAR_PATH} -p ${INFO_IMPLEMENTOR_JAR_PATH} src/modules/ru.ifmo.rain.yatcheniy.implementor/src/ru/ifmo/rain/yatcheniy/implementor/*.java
+	javac -encoding UTF8 -d out/production/ru.ifmo.rain.yatcheniy.implementor -p ${INFO_IMPLEMENTOR_JAR_PATH} src/modules/ru.ifmo.rain.yatcheniy.implementor/module-info.java
+build_jar_module:
 	jar --create --file ${RU_IMPLEMENTOR_JAR_PATH} --main-class ru.ifmo.rain.yatcheniy.implementor.Implementor --module-version 1.0 -C out/production/ru.ifmo.rain.yatcheniy.implementor .
 test_implementor: build_jar_module
-	$(call run_test_with_module,implementor,jar-class,Implementor)
+	$(call run_test_with_module,implementor,class,Implementor)
+test_jar_implementor: build_jar_module
+	$(call run_test_with_module,implementor,jar-class,Implementor,003)
 java_doc:
-	javadoc -d ${JAVADOC_PATH} --source-path ${RU_IMPLEMENTOR_SOURCE_PATH} --module-path ${RU_IMPLEMENTOR_JAR_PATH};${INFO_IMPLEMENTOR_MODULE_PATH} --module ru.ifmo.rain.yatcheniy.implementor
+#	rmdir /s "${JAVADOC_PATH}"
+	javadoc -html4 -verbose -private -d ${JAVADOC_PATH} \
+	-p ${INFO_IMPLEMENTOR_JAR_PATH} --module-source-path ${RU_IMPLEMENTOR_SOURCE_PATH};${MODULES_PATH} \
+	--module ru.ifmo.rain.yatcheniy.implementor -link ${JAVADOC_LINK}
 
 #07
 test_concurrent:
-	$(call run_test_with_module,concurrent,list,IterativeParallelism)
+	$(call run_test_with_module,concurrent,list,IterativeParallelism,94)
+
+#08
+test_mapper:
+#	info.kgeorgiy.java.advanced.mapper list <ParallelMapperImpl>,<IterativeParallelism>
+#	$(call run_test_with_module,mapper,list,IterativeParallelism,94)
+	java -p ${RU_ARTIFACTS_PATH}/ru_ifmo_rain_yatcheniy_mapper_jar/ru.ifmo.rain.yatcheniy.mapper.jar;\
+	${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.mapper.jar;\
+	${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.concurrent.jar;\
+	${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${LIB_PATH} \
+	--add-modules ru.ifmo.rain.yatcheniy.mapper \
+	-m info.kgeorgiy.java.advanced.mapper list ru.ifmo.rain.yatcheniy.mapper.ParallelMapperImpl,ru.ifmo.rain.yatcheniy.mapper.IterativeParallelism

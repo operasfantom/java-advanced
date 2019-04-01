@@ -29,7 +29,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
                 .sorted(STUDENT_COMPARATOR);
     }
 
-    private Stream<Group> getGroupsByName0(Collection<Student> students) {
+    private Stream<Group> getGroupsByNameStream(Collection<Student> students) {
         return getGroups(students)
                 .sorted(GROUP_ASCENDING_NAME_COMPARATOR)
                 .map(group -> new Group(group.getName(), sortStudentsByName(group.getStudents())));
@@ -46,7 +46,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
 
     @Override
     public List<Group> getGroupsByName(Collection<Student> students) {
-        return getGroupsByName0(students)
+        return getGroupsByNameStream(students)
                 .collect(Collectors.toList());
     }
 
@@ -72,7 +72,7 @@ public class StudentDB implements StudentGroupQuery, AdvancedStudentGroupQuery {
 
     @Override
     public List<Group> getGroupsById(Collection<Student> students) {
-        return getGroupsByName0(students)
+        return getGroupsByNameStream(students)
                 .map(group -> new Group(group.getName(), sortStudentsById(group.getStudents())))
                 .collect(Collectors.toList());
     }
