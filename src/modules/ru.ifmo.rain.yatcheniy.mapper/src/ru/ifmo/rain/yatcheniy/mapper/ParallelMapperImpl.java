@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public class ParallelMapperImpl implements ParallelMapper {
-    private static final int TASKS_LIMIT = 2_000;
+    private static final int TASKS_LIMIT = 32_000;
     private final List<Thread> workers;
     private final Queue<Runnable> tasks = new ArrayDeque<>();
     private int threads;

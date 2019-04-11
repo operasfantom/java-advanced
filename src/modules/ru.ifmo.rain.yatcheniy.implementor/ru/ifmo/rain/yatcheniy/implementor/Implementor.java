@@ -36,7 +36,7 @@ public class Implementor implements JarImpler {
     /**
      * Arguments for usage class
      */
-    private static String USAGE_MESSAGE = "Usage: [-jar] <className> [*.jar]";
+    private static String USAGE_MESSAGE = "Usage: [-class] <className> [*.jar]";
     /**
      * Suffix of implementation file's name
      */
@@ -53,6 +53,13 @@ public class Implementor implements JarImpler {
      * Unhandled exception to be processed after all
      */
     private ImplerException thrownException = null;
+
+
+    /**
+     * Empty constructor
+     */
+    public Implementor() {
+    }
 
     /**
      * The entry point of application.
@@ -71,7 +78,7 @@ public class Implementor implements JarImpler {
                     logError("Required non null parameters");
                     return;
                 }
-                if ("-jar".equals(args[0])) {
+                if ("-class".equals(args[0])) {
                     implementor.implementJar(Class.forName(args[1]), Paths.get(args[2]));
                 } else {
                     logError(USAGE_MESSAGE);
@@ -178,6 +185,8 @@ public class Implementor implements JarImpler {
     }
 
     /**
+     * Get {@code Constructor}'s header
+     *
      * @param constructor {@link Constructor}
      * @return formatted header of according class
      */
@@ -217,6 +226,8 @@ public class Implementor implements JarImpler {
     }
 
     /**
+     * Get {@code Constructor}'s modifiers
+     *
      * @param constructor {@link Class}'s constructor to provide modifiers
      * @return all <tt>constructor</tt>'s modifiers
      */
@@ -437,7 +448,11 @@ public class Implementor implements JarImpler {
      * @return java package name
      */
     private String getPackage(Class<?> token) {
-        return String.format("package %s;", token.getPackageName());
+        String packageName = token.getPackageName();
+        if (packageName.isEmpty()) {
+            return "";
+        }
+        return String.format("package %s;", packageName);
     }
 
     //endregion
@@ -483,7 +498,8 @@ public class Implementor implements JarImpler {
         }
         final List<String> args = new ArrayList<>();
         args.add(file.toString());
-        String classPath = String.format("%s%s%s%s%s", buildDirectory, File.pathSeparator, System.getProperty("java.class.path"), File.separator, System.getProperty("jdk.module.path"));
+        String classPath = String.format("%s%s%s%s%s", buildDirectory, File.pathSeparator,
+                System.getProperty("java.class.path"), File.separator, System.getProperty("jdk.module.path"));
         args.addAll(Arrays.asList("-cp", classPath));
         args.addAll(Arrays.asList("-d", buildDirectory.toString()));
         args.addAll(Arrays.asList("-encoding", "UTF-8"));

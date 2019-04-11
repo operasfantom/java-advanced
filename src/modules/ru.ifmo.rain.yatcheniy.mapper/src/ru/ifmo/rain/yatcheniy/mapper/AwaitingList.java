@@ -20,9 +20,7 @@ class AwaitingList<T> {
     }
 
     void set(int i, T apply) {
-        synchronized (list) {
-            list.set(i, apply);
-        }
+        list.set(i, apply);
         synchronized (this) {
             ++filled;
             if (filled == list.size()) {
