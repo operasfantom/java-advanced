@@ -10,7 +10,10 @@ MODULES_PATH=java-advanced-2019/modules
 INFO_BASE_JAR_PATH=${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar
 
 define run_test_with_module
-	java -p ${RU_ARTIFACTS_PATH}/ru_ifmo_rain_yatcheniy_$(1)_jar/ru.ifmo.rain.yatcheniy.$(1).jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.$(1).jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${LIB_PATH} --add-modules ru.ifmo.rain.yatcheniy.$(1) -m info.kgeorgiy.java.advanced.$(1) $(2) ru.ifmo.rain.yatcheniy.$(1).$(3) $(4)
+	java \
+	-p ${RU_ARTIFACTS_PATH}/ru_ifmo_rain_yatcheniy_$(1)_jar/ru.ifmo.rain.yatcheniy.$(1).jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.$(1).jar;${LIB_PATH} \
+	--add-modules ru.ifmo.rain.yatcheniy.$(1) \
+	-m info.kgeorgiy.java.advanced.$(1) $(2) ru.ifmo.rain.yatcheniy.$(1).$(3) $(4)
 endef
 #01
 test_walk:
@@ -32,29 +35,29 @@ JAVADOC_LINK=https://docs.oracle.com/en/java/javase/12/docs/api
 build_classes:
 	javac \
 	-encoding UTF8 \
-	-d out/production/ru.ifmo.rain.yatcheniy.implementor \
-	-cp ${INFO_IMPLEMENTOR_JAR_PATH} \
+	-d out/production \
 	-p ${INFO_IMPLEMENTOR_JAR_PATH} \
-	src/modules/ru.ifmo.rain.yatcheniy.implementor/ru/ifmo/rain/yatcheniy/implementor/*.java
-
-	javac \
-	-encoding UTF8 \
-	-d out/production/ru.ifmo.rain.yatcheniy.implementor \
-	-p ${INFO_IMPLEMENTOR_JAR_PATH} src/modules/ru.ifmo.rain.yatcheniy.implementor/module-info.java
+	--module-source-path ${RU_IMPLEMENTOR_SOURCE_PATH} \
+	--module ru.ifmo.rain.yatcheniy.implementor
 build_jar_module: build_classes
-	jar --create --file ${RU_IMPLEMENTOR_JAR_PATH} \
+	jar --create \
+	--file ${RU_IMPLEMENTOR_JAR_PATH} \
 	--main-class ru.ifmo.rain.yatcheniy.implementor.Implementor \
-	--module-version 1.0 -C out/production/ru.ifmo.rain.yatcheniy.implementor .
-test_implementor: build_jar_module
-	$(call run_test_with_module,implementor,class,Implementor)
+	--module-version 1.0 \
+	-C out/production/ru.ifmo.rain.yatcheniy.implementor .
 test_jar_implementor: build_jar_module
 	$(call run_test_with_module,implementor,jar-class,Implementor)
-run_jar_implementor:
+run_jar_implementor: build_jar_module
 	java \
+	-cp ${INFO_IMPLEMENTOR_JAR_PATH} \
 	-p ${INFO_IMPLEMENTOR_JAR_PATH};${RU_IMPLEMENTOR_JAR_PATH} \
 	--add-modules ru.ifmo.rain.yatcheniy.implementor \
 	-m ru.ifmo.rain.yatcheniy.implementor \
-	-class java.util.List C:\temp\out.jar
+	-class \
+	info.kgeorgiy.java.advanced.implementor.basic.interfaces.InterfaceWithDefaultMethod \
+	C:\temp\out.jar
+#run_jar_implementor_2:
+#	java -jar ${RU_IMPLEMENTOR_JAR_PATH} ru.ifmo.rain.yatcheniy.implementor.Implementor -class java.util.List some.jar
 java_doc:
 #	rmdir /s "${JAVADOC_PATH}"
 	javadoc -html4 -verbose -private -d ${JAVADOC_PATH} \

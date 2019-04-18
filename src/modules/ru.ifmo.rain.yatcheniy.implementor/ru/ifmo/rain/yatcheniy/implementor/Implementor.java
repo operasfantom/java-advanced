@@ -478,7 +478,6 @@ public class Implementor implements JarImpler {
             Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
             compileFile(buildDirectory, javaFilePath);
             writeJar(token, jarFile, classFilePath);
-            return;
         } catch (IOException e) {
             throw new ImplerException("Error occurred while witting jar: " + e.getMessage());
         }

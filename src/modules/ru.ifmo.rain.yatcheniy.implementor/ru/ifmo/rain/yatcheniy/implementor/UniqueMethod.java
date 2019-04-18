@@ -36,7 +36,9 @@ class UniqueMethod {
      */
     @Override
     public int hashCode() {
-        return method.toString().hashCode();
+        var hash = method.getName().hashCode();
+        hash = 31 * hash + Arrays.hashCode(method.getParameterTypes());
+        return hash;
     }
 
     /**
