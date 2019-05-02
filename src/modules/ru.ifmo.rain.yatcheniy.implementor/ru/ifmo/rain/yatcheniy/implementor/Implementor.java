@@ -36,7 +36,7 @@ public class Implementor implements JarImpler {
     /**
      * Arguments for usage class
      */
-    private static String USAGE_MESSAGE = "Usage: [-class] <className> [*.jar]";
+    private static final String USAGE_MESSAGE = "Usage: [-class] <className> [*.jar]";
     /**
      * Suffix of implementation file's name
      */
@@ -149,7 +149,7 @@ public class Implementor implements JarImpler {
         }
 
         if (Modifier.isFinal(token.getModifiers())) {
-            throw new ImplerException("Token can't final");
+            throw new ImplerException("Token can't be final");
         }
 
         var printer = new PrettyPrinter();
@@ -161,12 +161,8 @@ public class Implementor implements JarImpler {
 
         try (Writer out = Files.newBufferedWriter(resolvePath(token, root, JAVA_EXT), StandardCharsets.UTF_8)) {
             out.write(printer.toString());
-            /*try (Writer writer = Files.newBufferedWriter(Paths.get("C:/temp/output.log"), StandardOpenOption.APPEND)) {
-                writer.write(printer.toString());
-            }*/
-//            System.err.println(printer.toString());
         } catch (IOException e) {
-            throw new ImplerException("Error while writing: " + e.getMessage());
+            throw new ImplerException("Error while writing: " + e.getMessage(), e);
         }
     }
 
@@ -405,7 +401,7 @@ public class Implementor implements JarImpler {
                 Modifier.toString(getOverriddenModifiers(method)),
                 method.getReturnType().getCanonicalName(),
                 method.getName(),
-                getParameters(method, false)
+                getParameters(method)
         );
     }
 
@@ -422,12 +418,11 @@ public class Implementor implements JarImpler {
     /**
      * Get parameters of provided <tt>constructor</tt>
      *
-     * @param method  {@link Method} to get parameters from
-     * @param isUsage {@link #getParameters(Parameter[], boolean)}
+     * @param method {@link Method} to get parameters from
      * @return {@link String} presentation of parameters
      */
-    private String getParameters(Method method, boolean isUsage) {
-        return getParameters(method.getParameters(), isUsage);
+    private String getParameters(Method method) {
+        return getParameters(method.getParameters(), false);
     }
 
     /**
@@ -469,17 +464,20 @@ public class Implementor implements JarImpler {
     @Override
     public void implementJar(Class<?> token, Path jarFile) throws ImplerException {
         try {
-//            Path implementationsDirectory = Files.createTempDirectory(".");
-            Path implementationsDirectory = Files.createTempDirectory(jarFile.toAbsolutePath().getParent(), "temp");
-//            Path buildDirectory = Files.createTempDirectory(".");
-            Path buildDirectory = implementationsDirectory;
-            implement(token, implementationsDirectory);
-            Path javaFilePath = resolvePath(token, implementationsDirectory, JAVA_EXT);
-            Path classFilePath = resolvePath(token, buildDirectory, CLASS_EXT);
-            compileFile(buildDirectory, javaFilePath);
+            Path absolutePath = jarFile.toAbsolutePath();
+            Path tempDirectory;
+            if (absolutePath.getParent() != null) {
+                tempDirectory = Files.createTempDirectory(absolutePath.getParent(), "temp");
+            } else {
+                tempDirectory = Files.createTempDirectory(".");
+            }
+            implement(token, tempDirectory);
+            Path javaFilePath = resolvePath(token, tempDirectory, JAVA_EXT);
+            Path classFilePath = resolvePath(token, tempDirectory, CLASS_EXT);
+            compileFile(tempDirectory, javaFilePath);
             writeJar(token, jarFile, classFilePath);
         } catch (IOException e) {
-            throw new ImplerException("Error occurred while witting jar: " + e.getMessage());
+            throw new ImplerException("Error occurred while writting jar: " + e.getMessage(), e);
         }
     }
 
@@ -504,7 +502,7 @@ public class Implementor implements JarImpler {
         args.addAll(Arrays.asList("-encoding", "UTF-8"));
         final int exitCode = compiler.run(null, null, null, args.toArray(String[]::new));
         if (exitCode != 0) {
-            throw new ImplerException(String.format("Couldn't create jar, exit code:%d", exitCode));
+            throw new ImplerException(String.format("Couldn't create jar, exit code: %d", exitCode));
         }
     }
 
@@ -521,7 +519,6 @@ public class Implementor implements JarImpler {
         Attributes mainAttributes = manifest.getMainAttributes();
         mainAttributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
         mainAttributes.put(Attributes.Name.IMPLEMENTATION_VENDOR, "Pavel Yatcheniy");
-//        mainAttributes.put(Attributes.Name.MAIN_CLASS, token.getCanonicalName());
         try (JarOutputStream stream = new JarOutputStream(Files.newOutputStream(jarFile), manifest)) {
             stream.putNextEntry(new ZipEntry(resolveJarPath(token)));
             Files.copy(classFilePath, stream);

@@ -9,11 +9,11 @@ public class ParallelMapperImpl implements ParallelMapper {
     private static final int TASKS_LIMIT = 32_000;
     private final List<Thread> workers;
     private final Queue<Runnable> tasks = new ArrayDeque<>();
-    private int threads;
+    private final List<Exception> suppressedExceptions = new ArrayList<>();
 
     public ParallelMapperImpl(int threads) {
-        this.threads = threads;
         workers = new ArrayList<>(Collections.nCopies(threads, null));
+
         for (int i = 0; i < threads; i++) {
             Thread thread = new Thread(() -> {
                 try {
@@ -40,7 +40,13 @@ public class ParallelMapperImpl implements ParallelMapper {
             runnable = tasks.poll();
             tasks.notify();
         }
-        runnable.run();
+        try {
+            runnable.run();
+        } catch (Exception e) {
+            synchronized (suppressedExceptions) {
+                suppressedExceptions.add(e);
+            }
+        }
     }
 
     private void put(final Runnable task) throws InterruptedException {
@@ -60,18 +66,22 @@ public class ParallelMapperImpl implements ParallelMapper {
             int j = i;
             put(() -> answers.set(j, function.apply(list.get(j))));
         }
-        return answers.toList();
+        List<R> result = answers.toList();
+
+        if (!suppressedExceptions.isEmpty()) {
+            RuntimeException compoundException = new RuntimeException();
+            suppressedExceptions.forEach(compoundException::addSuppressed);
+            throw compoundException;
+        }
+
+        return result;
     }
 
     @Override
     public void close() {
         workers.forEach(Thread::interrupt);
         for (Thread worker : workers) {
-            try {
-                worker.join();
-            } catch (InterruptedException ignored) {
-                System.err.println("InterruptedException thrown on close");
-            }
+            worker.interrupt();
         }
     }
 }

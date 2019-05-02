@@ -37,14 +37,15 @@ public class IterativeParallelism implements ListIP {
         threads = min(threads, values.size());
 
         List<List<? extends T>> splittedList = split(values, threads);
-        List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
+        final List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
+        final List<Exception> suppressedExceptions = new ArrayList<>(Collections.nCopies(threads, null));
         List<Thread> threadList = IntStream.range(0, threads)
                 .mapToObj(i -> new Thread(() -> {
                             try {
-                                R apply = mapper.apply(splittedList.get(i).stream());
-                                results.set(i, apply);
+                                R result = mapper.apply(splittedList.get(i).stream());
+                                results.set(i, result);
                             } catch (Exception e) {
-                                System.err.println("Error: couldn't perform async action");
+                                suppressedExceptions.set(i, e);
                             }
                         })
                 ).collect(Collectors.toList());
@@ -55,6 +56,15 @@ public class IterativeParallelism implements ListIP {
             thread.join();
         }
 
+        var suppressedExceptionsNotNull = suppressedExceptions
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (!suppressedExceptionsNotNull.isEmpty()) {
+            RuntimeException compoundException = new RuntimeException();
+            suppressedExceptionsNotNull.forEach(compoundException::addSuppressed);
+            throw compoundException;
+        }
         return results.stream()
                 .reduce(mergeFunction)
                 .orElseThrow();

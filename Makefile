@@ -45,8 +45,10 @@ build_jar_module: build_classes
 	--main-class ru.ifmo.rain.yatcheniy.implementor.Implementor \
 	--module-version 1.0 \
 	-C out/production/ru.ifmo.rain.yatcheniy.implementor .
+test_class_implementor: build_jar_module
+	$(call run_test_with_module,implementor,class,Implementor)
 test_jar_implementor: build_jar_module
-	$(call run_test_with_module,implementor,jar-class,Implementor)
+	$(call run_test_with_module,implementor,jar-class,Implementor,832)
 run_jar_implementor: build_jar_module
 	java \
 	-cp ${INFO_IMPLEMENTOR_JAR_PATH} \
@@ -66,7 +68,7 @@ java_doc:
 
 #07
 test_concurrent:
-	$(call run_test_with_module,concurrent,list,IterativeParallelism,94)
+	$(call run_test_with_module,concurrent,list,IterativeParallelism)
 
 #08
 test_mapper:

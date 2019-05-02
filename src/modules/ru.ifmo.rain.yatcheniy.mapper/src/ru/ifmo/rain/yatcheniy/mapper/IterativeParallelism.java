@@ -35,7 +35,7 @@ public class IterativeParallelism implements ListIP {
 
     private <R, T> R applyParallel(int threads, List<? extends T> values, Function<Stream<? extends T>, R> mapper, BinaryOperator<R> mergeFunction) throws InterruptedException {
         if (threads <= 0) {
-            throw new IllegalArgumentException("number of threads must be grater than zero, current: " + threads);
+            throw new IllegalArgumentException("number of threads must be greater than zero, current: " + threads);
         }
         if (values == null) {
             throw new IllegalArgumentException("Requires non-null list of values");
@@ -46,21 +46,31 @@ public class IterativeParallelism implements ListIP {
 
         if (parallelMapper == null) {
             final List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
+            final List<Exception> suppressedExceptions = new ArrayList<>(Collections.nCopies(threads, null));
             List<Thread> threadList = IntStream.range(0, threads)
                     .mapToObj(i -> new Thread(() -> {
-                                try {
-                                    R apply = mapper.apply(splittedList.get(i).stream());
-                                    results.set(i, apply);
-                                } catch (Exception e) {
-                                    System.err.println("Error: couldn't perform async action");
-                                }
-                            })
-                    ).collect(Collectors.toList());
+                        try {
+                            R apply = mapper.apply(splittedList.get(i).stream());
+                            results.set(i, apply);
+                        } catch (Exception e) {
+                            suppressedExceptions.set(i, e);
+                        }
+                    }))
+                    .collect(Collectors.toList());
             threadList.forEach(Thread::start);
             for (Thread thread : threadList) {
                 thread.join();
             }
 
+            var suppressedExceptionsNotNull = suppressedExceptions
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            if (!suppressedExceptionsNotNull.isEmpty()) {
+                RuntimeException compoundException = new RuntimeException();
+                suppressedExceptionsNotNull.forEach(compoundException::addSuppressed);
+                throw compoundException;
+            }
             return results.stream()
                     .reduce(mergeFunction)
                     .orElseThrow();
