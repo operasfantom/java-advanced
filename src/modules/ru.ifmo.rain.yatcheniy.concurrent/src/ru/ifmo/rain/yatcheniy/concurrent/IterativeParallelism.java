@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import static java.lang.Math.min;
 
+@SuppressWarnings("unused")
 public class IterativeParallelism implements ListIP {
 
     private <T> List<List<? extends T>> split(List<? extends T> values, int threads) {
@@ -29,22 +30,22 @@ public class IterativeParallelism implements ListIP {
 
     private <R, T> R applyParallel(int threads, List<? extends T> values, Function<Stream<? extends T>, R> mapper, BinaryOperator<R> mergeFunction) throws InterruptedException {
         if (threads <= 0) {
-            throw new IllegalArgumentException("number of threads must be grater than zero, current: " + threads);
+            throw new IllegalArgumentException("Number of threads must be grater than zero, current: " + threads);
         }
         if (values == null) {
             throw new IllegalArgumentException("Requires non-null list of values");
         }
         threads = min(threads, values.size());
 
-        List<List<? extends T>> splittedList = split(values, threads);
+        List<List<? extends T>> splitList = split(values, threads);
         final List<R> results = new ArrayList<>(Collections.nCopies(threads, null));
         final List<Exception> suppressedExceptions = new ArrayList<>(Collections.nCopies(threads, null));
         List<Thread> threadList = IntStream.range(0, threads)
                 .mapToObj(i -> new Thread(() -> {
                             try {
-                                R result = mapper.apply(splittedList.get(i).stream());
+                                R result = mapper.apply(splitList.get(i).stream());
                                 results.set(i, result);
-                            } catch (Exception e) {
+                            } catch (RuntimeException e) {
                                 suppressedExceptions.set(i, e);
                             }
                         })
@@ -52,17 +53,29 @@ public class IterativeParallelism implements ListIP {
 
         threadList.forEach(Thread::start);
 
+        InterruptedException joinException = null;
         for (Thread thread : threadList) {
-            thread.join();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                if (joinException == null) {
+                    joinException = e;
+                } else {
+                    joinException.addSuppressed(e);
+                }
+            }
+        }
+        if (joinException != null) {
+            throw joinException;
         }
 
-        var suppressedExceptionsNotNull = suppressedExceptions
+        var realSuppressedExceptions = suppressedExceptions
                 .stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        if (!suppressedExceptionsNotNull.isEmpty()) {
+        if (!realSuppressedExceptions.isEmpty()) {
             RuntimeException compoundException = new RuntimeException();
-            suppressedExceptionsNotNull.forEach(compoundException::addSuppressed);
+            realSuppressedExceptions.forEach(compoundException::addSuppressed);
             throw compoundException;
         }
         return results.stream()

@@ -5,6 +5,7 @@ import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 import java.util.*;
 import java.util.function.Function;
 
+@SuppressWarnings("unused")
 public class ParallelMapperImpl implements ParallelMapper {
     private static final int TASKS_LIMIT = 32_000;
     private final List<Thread> workers;

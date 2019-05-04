@@ -6,22 +6,25 @@ import java.util.List;
 
 class AwaitingList<T> {
     private final List<T> list;
+    private final Object monitor = new Object();
     private int filled = 0;
 
     AwaitingList(int size) {
         list = new ArrayList<>(Collections.nCopies(size, null));
     }
 
-    synchronized List<T> toList() throws InterruptedException {
-        while (filled < list.size()) {
-            wait();
+    List<T> toList() throws InterruptedException {
+        synchronized (monitor) {
+            while (filled < list.size()) {
+                wait();
+            }
+            return list;
         }
-        return list;
     }
 
     void set(int i, T apply) {
         list.set(i, apply);
-        synchronized (this) {
+        synchronized (monitor) {
             ++filled;
             if (filled == list.size()) {
                 notify();

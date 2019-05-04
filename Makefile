@@ -68,7 +68,7 @@ java_doc:
 
 #07
 test_concurrent:
-	$(call run_test_with_module,concurrent,list,IterativeParallelism)
+	$(call run_test_with_module,concurrent,list,IterativeParallelism,99)
 
 #08
 test_mapper:
@@ -80,3 +80,9 @@ test_mapper:
 	${INFO_ARTIFACTS_PATH}/info.kgeorgiy.java.advanced.base.jar;${LIB_PATH} \
 	--add-modules ru.ifmo.rain.yatcheniy.mapper \
 	-m info.kgeorgiy.java.advanced.mapper list ru.ifmo.rain.yatcheniy.mapper.ParallelMapperImpl,ru.ifmo.rain.yatcheniy.mapper.IterativeParallelism
+
+#10
+test_hello_client:
+	$(call run_test_with_module,hello,client,HelloUDPClient)
+test_hello_server:
+	$(call run_test_with_module,hello,server,HelloUDPServer)

@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import static java.lang.Math.min;
 
+@SuppressWarnings("unused")
 public class IterativeParallelism implements ListIP {
     private ParallelMapper parallelMapper;
 
