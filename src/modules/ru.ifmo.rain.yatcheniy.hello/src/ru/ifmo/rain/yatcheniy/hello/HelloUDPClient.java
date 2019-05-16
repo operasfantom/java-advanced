@@ -20,6 +20,8 @@ public class HelloUDPClient implements HelloClient {
     @SuppressWarnings("WeakerAccess")
     public HelloUDPClient() {
         logger.addHandler(new StreamHandler(System.err, new SimpleFormatter()));
+        System.setProperty("java.util.logging.SimpleFormatter.format",
+                "%1$tb %1$td, %1$tY %1$tl:%1$tM:%1$tS.%1$tL %1$Tp %n%2$s%n%4$s: %5$s%n");
     }
 
     private static void printManualString() {
@@ -59,6 +61,10 @@ public class HelloUDPClient implements HelloClient {
         new HelloUDPClient().run(host, port, prefix, threads, requests);
     }
 
+    private static boolean isRespond(final String requestMessage, final String respondMessage) {
+        return respondMessage.contains(requestMessage);
+    }
+
     private String getMessage(String prefix, int threadId, int requestId) {
         return String.format(
                 "%s%d_%d",
@@ -86,20 +92,17 @@ public class HelloUDPClient implements HelloClient {
                         if (isRespond(requestMessage, respondMessage)) {
                             logger.info(String.format("Message received: %s", respondMessage));
                             break;
+                        } else {
+                            logger.warning(String.format("%s is not respond", respondMessage));
                         }
                     } catch (IOException e) {
-                        logger.log(Level.SEVERE, String.format("Can't send request in thread %d", threadId), e);
+                        logger.log(Level.SEVERE, String.format("Can't send request in thread %d: " + e.getMessage(), threadId));
                     }
                 }
             }
         } catch (SocketException e) {
-            logger.log(Level.SEVERE, "Can't create socket", e);
+            logger.log(Level.SEVERE, "Can't create socket: " + e.getMessage());
         }
-    }
-
-    private boolean isRespond(final String requestMessage, final String respondMessage) {
-        return requestMessage.length() != respondMessage.length() &&
-                (respondMessage.contains(requestMessage + " ") || respondMessage.endsWith(requestMessage));
     }
 
     @Override

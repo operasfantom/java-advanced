@@ -91,7 +91,7 @@ public class HelloUDPServer implements HelloServer {
                 sender.submit(() -> sendResponse(packet));
             } catch (IOException e) {
                 if (!closed) {
-                    logger.log(Level.WARNING, "Can't receive packet", e);
+                    logger.log(Level.WARNING, "Can't receive packet: " + e.getMessage());
                 }
             }
         }
@@ -107,7 +107,7 @@ public class HelloUDPServer implements HelloServer {
         try {
             socket.send(responsePacket);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, String.format("Can't send packet to %s", packet.getSocketAddress()), e);
+            logger.log(Level.SEVERE, String.format("Can't send packet to %s: " + e.getMessage(), packet.getSocketAddress()));
         }
     }
 }

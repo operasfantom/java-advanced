@@ -83,6 +83,6 @@ test_mapper:
 
 #10
 test_hello_client:
-	$(call run_test_with_module,hello,client,HelloUDPClient)
+	$(call run_test_with_module,hello,client-i18n,HelloUDPClient)
 test_hello_server:
-	$(call run_test_with_module,hello,server,HelloUDPServer)
+	$(call run_test_with_module,hello,server-i18n,HelloUDPServer)

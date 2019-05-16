@@ -16,18 +16,18 @@ class AwaitingList<T> {
     List<T> toList() throws InterruptedException {
         synchronized (monitor) {
             while (filled < list.size()) {
-                wait();
+                monitor.wait();
             }
             return list;
         }
     }
 
     void set(int i, T apply) {
-        list.set(i, apply);
         synchronized (monitor) {
+            list.set(i, apply);
             ++filled;
             if (filled == list.size()) {
-                notify();
+                monitor.notify();
             }
         }
     }

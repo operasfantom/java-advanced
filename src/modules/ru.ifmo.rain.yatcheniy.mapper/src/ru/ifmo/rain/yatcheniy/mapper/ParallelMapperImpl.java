@@ -82,7 +82,11 @@ public class ParallelMapperImpl implements ParallelMapper {
     public void close() {
         workers.forEach(Thread::interrupt);
         for (Thread worker : workers) {
-            worker.interrupt();
+            try {
+                worker.join();
+            } catch (InterruptedException ignored) {
+
+            }
         }
     }
 }
