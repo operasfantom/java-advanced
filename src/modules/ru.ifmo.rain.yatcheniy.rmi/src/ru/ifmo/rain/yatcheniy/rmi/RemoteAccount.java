@@ -1,4 +1,4 @@
-package rmi;
+package ru.ifmo.rain.yatcheniy.rmi;
 
 public class RemoteAccount implements Account {
     private final String id;

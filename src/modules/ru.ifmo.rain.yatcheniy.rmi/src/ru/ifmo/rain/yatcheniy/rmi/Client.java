@@ -1,4 +1,4 @@
-package rmi;
+package ru.ifmo.rain.yatcheniy.rmi;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;

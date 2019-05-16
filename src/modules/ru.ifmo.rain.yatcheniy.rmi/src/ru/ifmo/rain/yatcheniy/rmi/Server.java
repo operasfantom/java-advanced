@@ -1,11 +1,13 @@
-package rmi;
+package ru.ifmo.rain.yatcheniy.rmi;
 
-import java.rmi.*;
-import java.rmi.server.*;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 public class Server {
     private final static int PORT = 8888;
+
     public static void main(final String... args) {
         final Bank bank = new RemoteBank(PORT);
         try {
