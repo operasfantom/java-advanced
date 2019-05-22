@@ -7,6 +7,7 @@ import java.util.Map;
 public class LocalPerson extends AbstractPerson {
     private final Map<String, Account> accounts;
 
+    @SuppressWarnings("WeakerAccess")
     public LocalPerson(String name, String lastName, String passportId) {
         super(name, lastName, passportId);
         this.accounts = new HashMap<>();

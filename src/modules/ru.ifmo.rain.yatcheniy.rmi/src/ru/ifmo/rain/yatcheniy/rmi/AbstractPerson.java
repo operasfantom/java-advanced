@@ -50,9 +50,9 @@ public abstract class AbstractPerson implements Person {
             var person = (Person) o;
 
             try {
-                return /*Objects.equals(name, person.getName()) &&
+                return Objects.equals(name, person.getName()) &&
                         Objects.equals(lastName, person.getLastName()) &&
-                        */Objects.equals(passportId, person.getPassportId());
+                        Objects.equals(passportId, person.getPassportId());
             } catch (RemoteException e) {
                 System.err.println("Couldn't get remote fields of remote person");
                 return false;

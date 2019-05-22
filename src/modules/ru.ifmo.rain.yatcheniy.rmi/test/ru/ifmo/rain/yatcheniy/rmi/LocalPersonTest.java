@@ -34,9 +34,9 @@ public class LocalPersonTest extends PersonTestBase {
 
     @org.junit.Test
     public void createAndGetAccount() throws RemoteException {
-        getPerson().createAccount("1");
+        Account account = getPerson().createAccount("1");
 
-        assertNotNull(getPerson().getAccount("1"));
+        assertEquals(account, getPerson().getAccount("1"));
         assertNull(getPerson().getAccount("2"));
     }
 

@@ -25,8 +25,8 @@ public class RemotePersonTestBase implements RemoteTestBase {
     @Test
     public void createAndGetAccount() throws RemoteException {
         Account account = wire.getClientPerson().createAccount("1");
-        assertEquals("1", account.getId());
-        assertNull(wire.getClientBank().getAccount("2"));
+        assertEquals(account, wire.getClientPerson().getAccount("1"));
+        assertNull(wire.getClientPerson().getAccount("2"));
     }
 
     @Test
